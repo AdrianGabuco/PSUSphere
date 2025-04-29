@@ -1,0 +1,290 @@
+{% extends 'base.html' %} 
+{% load static %} 
+{% block content %}
+<style>
+  .chart-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px; /* Increased height */
+    width: 100%;
+    padding: 10px;
+}
+
+  .card {
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border-radius: 12px;
+  }
+
+  .card-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 12px 20px;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+  }
+
+  .card-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #333;
+  }
+
+  .page-inner {
+      padding: 30px;
+  }
+
+  .page-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+  }
+
+  .page-category {
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+      color: #777;
+  }
+
+  .row > div[class*="col-md-6"] {
+      margin-bottom: 20px;
+  }
+  
+  .card-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    height: 450px; /* Adjusted card height to accommodate larger charts */
+  }
+
+  canvas {
+    max-width: 90% !important; /* Allow charts to occupy more space */
+    max-height: 90% !important;
+  }
+
+</style>
+<div class="page-inner">
+  <h4 class="page-title">PSUSphere Dashboard</h4>
+  <div class="page-category">
+    Simple yet flexible JavaScript charting for designers & developers. Please checkout their 
+    <a href="https://www.chartjs.org/" target="_blank">full documentation</a>.
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Students Per College</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="polarChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Program Distribution</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="multiPieChart" style="width: 50%; height: 50%"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Organization Membership</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">College Organization Count</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="doughnutChart" style="width: 50%; height: 50%"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Student Enrollment Trend</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="lineChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block chart %}
+<!-- Load Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+<script>
+function getRandomColors(count) {
+    const colors = [];
+    for (let i = 0; i < count; i++) {
+        const r = Math.floor(Math.random() * 255);
+        const g = Math.floor(Math.random() * 255);
+        const b = Math.floor(Math.random() * 255);
+        colors.push(`rgb(${r}, ${g}, ${b})`);
+    }
+    return colors;
+}
+
+function loadChartData() {
+    // Doughnut Chart - College Organization Count
+    fetch("/college-orgs/")
+    .then(response => response.json())
+    .then(data => {
+        new Chart(document.getElementById('doughnutChart').getContext("2d"), {
+            type: 'doughnut',
+            data: {
+                labels: data.map(item => item.college_name),
+                datasets: [{
+                    data: data.map(item => item.org_count),
+                    backgroundColor: getRandomColors(data.length)
+                }],
+            },
+            options: {
+              plugins: {
+                legend: {
+                  position: 'left',
+                  labels: {
+                    boxWidth: 15,
+                    padding: 15
+                  }
+                }
+              }
+            }   
+        });
+    })
+    .catch(error => console.error("Error loading doughnut chart:", error));
+
+    // Line Chart - Enrollment Trend
+    fetch("/enrollment-trend/")
+    .then(response => response.json())
+    .then(data => {
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        new Chart(document.getElementById('lineChart').getContext("2d"), {
+            type: 'line',
+            data: {
+                labels: data.map(item => `${months[item.month-1]} ${item.year}`),
+                datasets: [{
+                    label: 'New Students',
+                    data: data.map(item => item.count),
+                    borderColor: '#FF6384',
+                    backgroundColor: '#FF6384',
+                    fill: false,
+                    tension: 0.4
+                }]
+            }
+        });
+    })
+    .catch(error => console.error("Error loading line chart:", error));
+
+    // Bar Chart - Organization Membership
+    fetch("/org-membership/")
+    .then(response => response.json())
+    .then(data => {
+        new Chart(document.getElementById('barChart').getContext("2d"), {
+            type: 'bar',
+            data: {
+                labels: data.map(item => item.name),
+                datasets: [{
+                    label: 'Members',
+                    data: data.map(item => item.member_count),
+                    backgroundColor: '#36A2EB'
+                }]
+            }
+        });
+    })
+    .catch(error => console.error("Error loading bar chart:", error));
+
+    // Doughnut Chart (instead of multi-series pie) - Program Distribution
+    fetch("/program-distribution/")
+    .then(response => response.json())
+    .then(data => {
+        new Chart(document.getElementById('multiPieChart').getContext("2d"), {
+            type: 'doughnut', // CHANGED from 'pie' to 'doughnut'
+            data: {
+                labels: data.map(item => item.prog_name),
+                datasets: [{
+                    label: 'Programs',
+                    data: data.map(item => item.student_count),
+                    backgroundColor: getRandomColors(data.length)
+                }],
+            },
+            options: {
+              plugins: {
+                legend: {
+                  position: 'left',
+                  labels: {
+                    boxWidth: 15,
+                    padding: 15
+                  }
+                }
+              }
+            }   
+        });
+    })
+    .catch(error => console.error("Error loading program distribution chart:", error));
+
+    // Polar Area Chart - Students per College
+    fetch("/students-per-college/")
+    .then(response => response.json())
+    .then(data => {
+        new Chart(document.getElementById('polarChart').getContext("2d"), {
+            type: 'polarArea',
+            data: {
+                labels: data.map(item => item.college_name),
+                datasets: [{
+                    data: data.map(item => item.student_count),
+                    backgroundColor: getRandomColors(data.length)
+                }],
+            },
+            options: {
+              plugins: {
+                legend: {
+                  position: 'left',
+                  labels: {
+                    boxWidth: 15,
+                    padding: 15
+                  }
+                }
+              }
+            }   
+        });
+    })
+    .catch(error => console.error("Error loading polar area chart:", error));
+}
+
+// Load all charts
+loadChartData();
+</script> 
+{% endblock %}

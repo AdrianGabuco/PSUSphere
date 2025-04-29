@@ -6,9 +6,12 @@ from studentorg.forms import OrganizationForm, MemberForm, CollegeForm, StudentF
 from django.urls import reverse_lazy
 from typing import Any
 from django.db.models.query import QuerySet
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db.models.functions import ExtractMonth, ExtractYear
+
 
 @method_decorator(login_required, name='dispatch')
 class HomePageView(ListView):
@@ -174,3 +177,46 @@ class ProgramDeleteView(DeleteView):
     model = Program
     template_name = 'program_del.html'
     success_url = reverse_lazy('program-list')
+
+class DashboardView(ListView):
+    template_name = 'dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+    
+    def get_queryset(self, *args, **kwargs):
+        pass
+
+def students_per_college(request):
+    data = College.objects.annotate(
+        student_count=Count('program__student')
+    ).values('college_name', 'student_count')
+    return JsonResponse(list(data), safe=False)
+
+def program_distribution(request):
+    data = Program.objects.annotate(
+        student_count=Count('student')
+    ).values('prog_name', 'student_count', 'college__college_name')
+    return JsonResponse(list(data), safe=False)
+
+def org_membership(request):
+    data = Organization.objects.annotate(
+        member_count=Count('orgmember')
+    ).values('name', 'member_count')
+    return JsonResponse(list(data), safe=False)
+
+def enrollment_trend(request):
+    data = Student.objects.annotate(
+        month=ExtractMonth('created_at'),
+        year=ExtractYear('created_at')
+    ).values('month', 'year').annotate(
+        count=Count('id')
+    ).order_by('year', 'month')
+    return JsonResponse(list(data), safe=False)
+
+def college_orgs(request):
+    data = College.objects.annotate(
+        org_count=Count('organization')
+    ).values('college_name', 'org_count')
+    return JsonResponse(list(data), safe=False)

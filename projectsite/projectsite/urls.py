@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, re_path
-from studentorg.views import HomePageView, OrganizationList, OrganizationCreateView, OrganizationUpdateView, OrganizationDeleteView, MemberList, MemberCreateView, MemberUpdateView, MemberDeleteView, CollegeList, CollegeCreateView, CollegeUpdateView, CollegeDeleteView, StudentList, StudentCreateView, StudentUpdateView, StudentDeleteView, ProgramList, ProgramCreateView, ProgramUpdateView, ProgramDeleteView
+from studentorg.views import college_orgs, enrollment_trend, org_membership, program_distribution, students_per_college,HomePageView, OrganizationList, OrganizationCreateView, OrganizationUpdateView, OrganizationDeleteView, MemberList, MemberCreateView, MemberUpdateView, MemberDeleteView, CollegeList, CollegeCreateView, CollegeUpdateView, CollegeDeleteView, StudentList, StudentCreateView, StudentUpdateView, StudentDeleteView, ProgramList, ProgramCreateView, ProgramUpdateView, ProgramDeleteView, DashboardView
 from studentorg import views
 from django.contrib.auth import views as auth_views
 
@@ -45,4 +45,10 @@ urlpatterns = [
     path('program_list/<pk>/delete', views.ProgramDeleteView.as_view(), name='program-delete'),
     re_path(r'^login/$', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     re_path(r'^logout/$', auth_views.LogoutView.as_view(), name='logout'),
+    path('dashboard_chart/', DashboardView.as_view(), name='dashboard-chart'),
+    path('students-per-college/', students_per_college, name='students-per-college'),
+    path('program-distribution/', program_distribution, name='program-distribution'),
+    path('org-membership/', org_membership, name='org-membership'),
+    path('enrollment-trend/', enrollment_trend, name='enrollment-trend'),
+    path('college-orgs/', college_orgs, name='college-orgs'),
 ]
