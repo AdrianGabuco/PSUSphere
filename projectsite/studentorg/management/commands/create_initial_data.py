@@ -6,9 +6,9 @@ class Command(BaseCommand):
     help = 'Create initial data for the application'
 
     def handle(self, *args, **kwargs):
-        self.create_organization(10)
-        self.create_students(50)
-        self.create_membership(10)
+        #self.create_organization(10)
+        self.create_students(35)
+        #self.create_membership(10)
 
     def create_organization(self, count):
         fake = Faker()
